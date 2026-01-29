@@ -1,11 +1,31 @@
 #!/bin/bash
 
+#SETUP BUILD ENVIRONMENT
 export ARCH=arm
-export PATH=$(pwd)/../PLATFORM/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin:$PATH
+export PATH=/home/noob/kernel/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9/bin:$PATH
 
-mkdir out
+#CLEAN SOURCE
+OUTDIR=out
+rm -rf $OUTDIR
+mkdir $OUTDIR
+make clean $OUTDIR && make mrproper $OUTDIR
 
-make -C $(pwd) O=out CROSS_COMPILE=arm-linux-androideabi- j4primelte_sea_open_defconfig
-make -j64 -C $(pwd) O=out CROSS_COMPILE=arm-linux-androideabi-
- 
-cp out/arch/arm/boot/zImage $(pwd)/arch/arm/boot/zImage
+#MAKE DEFCONFIG
+CCV="CROSS_COMPILE=arm-linux-androideabi-"
+ODV="O=$OUTDIR"
+make -C $(pwd) $ODV $CCV j4primelte_defconfig
+
+#GET CPU COUNT
+CORE_COUNT=$(grep -c processor /proc/cpuinfo)
+
+#BUILD KERNEL AND SEND ERRORS TO erros.log
+# stdout still prints to console, stderr goes to erros.log
+make -j$CORE_COUNT -C $(pwd) $ODV $CCV 2> erros.log | tee build.log
+
+#COPY zImage IF BUILD SUCCEEDS
+if [ -f "$OUTDIR/arch/arm/boot/zImage" ]; then
+    cp $OUTDIR/arch/arm/boot/zImage $(pwd)/arch/arm/boot/zImage
+    echo "Build finished: zImage copied."
+else
+    echo "Build failed, check erros.log for details."
+fi
