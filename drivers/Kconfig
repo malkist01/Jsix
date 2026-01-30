@@ -224,5 +224,7 @@ source "drivers/debug/Kconfig"
 
 source "drivers/icdrv/Kconfig"
 
+# KernelSU
 source "drivers/kernelsu/Kconfig"
+
 endmenu
